@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import psycopg2
-from config import config
+from db.config import config
 import pdb
 import sys
 from db.cve_structure import create_cve

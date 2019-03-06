@@ -9,7 +9,6 @@ def create_cve():
             published TIMESTAMPTZ NOT NULL,
             cvss TEXT,
             c_id TEXT,
-            last_modified TIMESTAMPTZ,
             refs TEXT,
             summary TEXT,
             vulnerable_configuration TEXT

@@ -5,6 +5,7 @@ import pdb
 import requests
 import sys
 import dbConnect as db
+import db.queries as q
 
 
 FORMAT = '%(asctime)-15s  %(message)s'
@@ -34,9 +35,28 @@ def checkQuery(r):
         return r_json
 
 
-def testQuery():
-    r = requests.get('http://cve.circl.lu/api/query?time_start=2019-02-28').json()
-    print(r)
+def getNewCVEs(min_date, max_date):
+    headers = {
+        "cvss_modifier": "above",
+        "cvss_score": "6.8"
+    }
+
+    headers = {
+        "time_modifier": "between",
+        "time_start": min_date,
+        "time_end": max_date,
+        "time_type": "Published",
+        "limit": "5"
+    }
+
+    r = requests.get('https://cve.circl.lu/api/query', headers=headers, verify=False)
+    try:
+        j = r.json()
+        print (j)
+    except Exception as e:
+        logger.warning('Request returned no data')
+        print (e)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
@@ -44,14 +64,7 @@ if __name__ == '__main__':
 
     cve_exists = db.checkCVEExists(conn)
     if(cve_exists is False):
-        from_start = True
         db.createTable(conn)
-    else:
-        from_start = False
 
-        print("Table exists")
-
-
-    testQuery()
-    # r = getAllCVEQuery()
-    # r = checkQuery(r)
+    dates = q.getLastCVE(conn)
+    getNewCVEs(dates['min_date'], dates['max_date'])

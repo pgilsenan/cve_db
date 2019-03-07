@@ -6,12 +6,14 @@ def create_cve():
         CREATE TABLE cve (
             id SERIAL PRIMARY KEY,
             modified TIMESTAMPTZ,
+            last_modified TIMESTAMPTZ,
             published TIMESTAMPTZ NOT NULL,
             cvss TEXT,
-            c_id TEXT,
+            cve_id TEXT,
+            cwe TEXT,
             refs TEXT,
-            summary TEXT,
-            vulnerable_configuration TEXT
+            summary TEXT
+            -- vulnerable_configuration TEXT
         )
         """)
 

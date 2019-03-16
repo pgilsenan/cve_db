@@ -10,7 +10,7 @@ from datetime import datetime, date, timedelta
 import urllib3
 urllib3.disable_warnings()
 
-TEST_CUT_OFF_DATE = datetime.strptime('01-04-2010', '%d-%m-%Y')
+TEST_CUT_OFF_DATE = datetime.strptime('01-06-2010', '%d-%m-%Y')
 
 FORMAT = '%(asctime)-15s  %(message)s'
 logging.basicConfig(filename='cve.log',format=FORMAT)
@@ -85,7 +85,6 @@ def checkResult(j, min_date, max_date):
 
 def getNextBatch(min_date, max_date):
     print ("OLD getNext - start: %s, end: %s" % (min_date, max_date))
-    # min_date_dt = datetime.strptime(max_date, '%d-%m-%Y')
     min_date_dt = datetime.strptime(max_date, '%d-%m-%Y') + timedelta(days=1)
     max_date_dt = datetime.strptime(max_date, '%d-%m-%Y') + timedelta(days=30)
 
@@ -102,6 +101,5 @@ if __name__ == '__main__':
         db.createTable(conn)
 
     dates = q.getLastCVE(conn)
-    print (dates)
     # getNewCVEs(dates['min_date'], dates['max_date'])
-    getNewCVEs('01-01-2010', '01-03-2010')
+    getNewCVEs('01-01-2010', '01-06-2010')

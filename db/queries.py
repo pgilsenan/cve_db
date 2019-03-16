@@ -39,10 +39,30 @@ def getLastCVE(conn):
 
 def addToTable(conn, data, latest_date):
     df = pd.DataFrame(data=data)
-    new_entries = df[df['Published'] > latest_date]
-    update_entries = df[df['Published'] <= latest_date]
+    ids = checkIDs(conn, df)
 
-    insertIntoTable(conn, new_entries)
+    update_entries = df[df['id'].isin(ids)]
+    new_entries = df[~df['id'].isin(ids)]
+
+    if(len(new_entries) > 0):
+        insertIntoTable(conn, new_entries)
+
+    # if(len(update_entries) > 0):
+        # updateTable(conn, update_entries)
+
+
+def checkIDs(conn, data):
+    ids = data['id'].to_list()
+    id_list = ", ".join("'{0}'".format(i) for i in ids)
+    cur = conn.cursor()
+    cur.execute("SELECT cve_id FROM cve WHERE cve_id IN ("+id_list+")")
+    tmp = cur.fetchall()
+
+    already_exists = []
+    for id_pair in tmp:
+        already_exists.append(id_pair[0])
+
+    return already_exists
 
 
 def insertIntoTable(conn, data):
@@ -56,6 +76,3 @@ def insertIntoTable(conn, data):
         cur, insert_query, insert_data
     )
     conn.commit()
-
-    # for index, row in data.iterrows():
-        # print(row['id'], row['Published'])

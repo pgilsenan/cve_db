@@ -12,7 +12,9 @@ def create_cve():
             cve_id TEXT,
             cwe TEXT,
             refs TEXT,
-            summary TEXT
+            summary TEXT,
+            acknowledged BOOLEAN,
+            escalated BOOLEAN
             -- vulnerable_configuration TEXT
         )
         """)

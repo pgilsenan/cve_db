@@ -37,7 +37,7 @@ def getLastCVE(conn):
         return dates
 
 
-def addToTable(conn, data, latest_date):
+def addToTable(conn, data):
     df = pd.DataFrame(data=data)
     ids = checkIDs(conn, df)
 

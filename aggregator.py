@@ -19,28 +19,6 @@ logger = logging.getLogger('vce_log')
 conn = db.connect()
 
 
-def getAllCVEQuery():
-    try:
-        r = requests.get('http://cve.circl.lu/api/search/microsoft/office')
-        logger.warning('Request ok')
-        return r
-    except requests.exceptions.RequestException as e:
-        logger.warning('Issue with request')
-        sys.exit(1)
-
-
-def checkQuery(r):
-    if r:
-        r_json = r.json()
-
-        if r_json == []:
-            logger.warning('Request returned no data')
-            sys.exit(1)
-
-        logger.warning('Request returned result')
-        return r_json
-
-
 def getNewCVEs(min_date, max_date):
     headers = {
         "time_modifier": "between",
@@ -52,7 +30,6 @@ def getNewCVEs(min_date, max_date):
         "limit": "100",
         "data": "json"
     }
-
     r = requests.get('https://cve.circl.lu/api/query', headers=headers, verify=False)
 
     try:
@@ -66,31 +43,35 @@ def getNewCVEs(min_date, max_date):
 
 
 def checkResult(j, min_date, max_date):
-    min_date_dt = datetime.strptime(min_date, '%d-%m-%Y')
-    max_date_dt = datetime.strptime(max_date, '%d-%m-%Y')
-    day_diff = (max_date_dt - min_date_dt)/2
-    new_max_date = min_date_dt + day_diff
-
-    max_date = new_max_date.strftime("%d-%m-%Y")
-    print ("New max date %s" % (max_date))
-
     if len(j) == 100:
+        # Too many results returned for period
+        # Cut number of days between dates in two
+        min_date_dt = datetime.strptime(min_date, '%d-%m-%Y')
+        max_date_dt = datetime.strptime(max_date, '%d-%m-%Y')
+
+        day_diff = (max_date_dt - min_date_dt)/2
+        new_max_date = min_date_dt + day_diff
+        max_date = new_max_date.strftime("%d-%m-%Y")
+
         getNewCVEs(min_date, max_date)
     else:
-        if new_max_date < TEST_CUT_OFF_DATE:
-            # Date under cut off - add to table
-            q.addToTable(conn, j, min_date)
-            getNextBatch(min_date, max_date)
+        q.addToTable(conn, j)
+        getNextBatch(min_date, max_date)
 
 
 def getNextBatch(min_date, max_date):
-    print ("OLD getNext - start: %s, end: %s" % (min_date, max_date))
     min_date_dt = datetime.strptime(max_date, '%d-%m-%Y') + timedelta(days=1)
     max_date_dt = datetime.strptime(max_date, '%d-%m-%Y') + timedelta(days=30)
-
     min_date = min_date_dt.strftime("%d-%m-%Y")
     max_date = max_date_dt.strftime("%d-%m-%Y")
-    print ("NEW getNext - start: %s, end: %s" %(min_date, max_date))
+
+    # Check that new max date isn't past limit
+    if max_date_dt > TEST_CUT_OFF_DATE and min_date_dt < TEST_CUT_OFF_DATE:
+        cut_off = TEST_CUT_OFF_DATE.strftime("%d-%m-%Y")
+        getNewCVEs(min_date, TEST_CUT_OFF_DATE)
+    elif max_date_dt > TEST_CUT_OFF_DATE and min_date_dt == TEST_CUT_OFF_DATE:
+        print ("Reached TEST_CUT_OFF_DATE")
+        sys.exit(1)
 
     getNewCVEs(min_date, max_date)
 
@@ -102,4 +83,4 @@ if __name__ == '__main__':
 
     dates = q.getLastCVE(conn)
     # getNewCVEs(dates['min_date'], dates['max_date'])
-    getNewCVEs('01-01-2010', '01-06-2010')
+    getNewCVEs('01-01-2010', '01-04-2010')

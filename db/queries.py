@@ -81,17 +81,18 @@ def insertIntoTable(conn, data):
 def updateTable(conn, data):
     cur = conn.cursor()
 
-    update_fields = data[['id', 'Modified', 'references', 'summary', 'cvss', 'cwe']]
-    update_fields['Modified'] = pd.to_datetime(update_fields['Modified'])
-    update_fields['cwe'] = update_fields['cwe'].fillna('')
-    update_fields.rename(index=str, columns={"references": "refs"}, inplace=True)
-    update_data = update_fields.values.tolist()
+    if 'id' in data.index:
+        update_fields = data[['id', 'Modified', 'references', 'summary', 'cvss', 'cwe']]
+        update_fields['Modified'] = pd.to_datetime(update_fields['Modified'])
+        # update_fields['cwe'] = update_fields['cwe'].fillna('')
+        update_fields.rename(index=str, columns={"references": "refs"}, inplace=True)
+        update_data = update_fields.values.tolist()
 
-    try:
-        update_query = 'UPDATE cve SET modified=data.Modified, refs=data.refs, summary=data.summary, cvss=data.cvss, cwe=data.cwe, last_modified=NOW() FROM (VALUES %s) AS data (id, Modified, refs, summary, cvss, cwe) WHERE cve.cve_id = data.id '
-        psycopg2.extras.execute_values (
-            cur, update_query, update_data
-        )
-        conn.commit()
-    except:
-        print ("ERROR: couldn't update CVEs")
+        try:
+            update_query = 'UPDATE cve SET modified=data.Modified, refs=data.refs, summary=data.summary, cvss=data.cvss, cwe=data.cwe, last_modified=NOW() FROM (VALUES %s) AS data (id, Modified, refs, summary, cvss, cwe) WHERE cve.cve_id = data.id '
+            psycopg2.extras.execute_values (
+                cur, update_query, update_data
+            )
+            conn.commit()
+        except:
+            print ("ERROR: couldn't update CVEs")

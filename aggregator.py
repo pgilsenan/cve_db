@@ -10,7 +10,12 @@ from datetime import datetime, date, timedelta
 import urllib3
 urllib3.disable_warnings()
 
-TEST_CUT_OFF_DATE = datetime.strptime('01-06-2010', '%d-%m-%Y')
+today = date.today()
+today = today.strftime("%d-%m-%Y")
+TEST_CUT_OFF_DATE = datetime.strptime(today, '%d-%m-%Y')
+COUNT = 0
+MAX_COUNT = 150
+FIELD = ""
 
 FORMAT = '%(asctime)-15s  %(message)s'
 logging.basicConfig(filename='cve.log',format=FORMAT)
@@ -24,7 +29,7 @@ def getNewCVEs(min_date, max_date):
         "time_modifier": "between",
         "time_start": min_date,
         "time_end": max_date,
-        "time_type": "Published",
+        "time_type": FIELD,
         "cvss_modifier": "above",
         "cvss_score": "4",
         "limit": "100",
@@ -43,6 +48,7 @@ def getNewCVEs(min_date, max_date):
 
 
 def checkResult(j, min_date, max_date):
+    global COUNT
     if len(j) == 100:
         # Too many results returned for period
         # Cut number of days between dates in two
@@ -55,7 +61,10 @@ def checkResult(j, min_date, max_date):
 
         getNewCVEs(min_date, max_date)
     else:
-        q.addToTable(conn, j)
+        if len(j) > 0:
+            q.addToTable(conn, j)
+            COUNT = COUNT + len(j)
+            print ("Pulled %d CVEs from %s to %s" % (len(j), min_date, max_date))
         getNextBatch(min_date, max_date)
 
 
@@ -65,15 +74,12 @@ def getNextBatch(min_date, max_date):
     min_date = min_date_dt.strftime("%d-%m-%Y")
     max_date = max_date_dt.strftime("%d-%m-%Y")
 
-    # Check that new max date isn't past limit
-    if max_date_dt > TEST_CUT_OFF_DATE and min_date_dt < TEST_CUT_OFF_DATE:
-        cut_off = TEST_CUT_OFF_DATE.strftime("%d-%m-%Y")
-        getNewCVEs(min_date, TEST_CUT_OFF_DATE)
-    elif max_date_dt > TEST_CUT_OFF_DATE and min_date_dt == TEST_CUT_OFF_DATE:
-        print ("Reached TEST_CUT_OFF_DATE")
+    if COUNT >= MAX_COUNT or min_date_dt > TEST_CUT_OFF_DATE:
+        print ("\nPulled %d CVEs" % COUNT)
+        print ("Last date: %s "% max_date)
         sys.exit(1)
-
-    getNewCVEs(min_date, max_date)
+    else:
+        getNewCVEs(min_date, max_date)
 
 
 if __name__ == '__main__':
@@ -82,5 +88,5 @@ if __name__ == '__main__':
         db.createTable(conn)
 
     dates = q.getLastCVE(conn)
-    # getNewCVEs(dates['min_date'], dates['max_date'])
-    getNewCVEs('01-01-2010', '01-04-2010')
+    FIELD = "Published" if cve_exists is False else "Modified"
+    getNewCVEs(dates['min_date'], dates['max_date'])

@@ -33,7 +33,8 @@ def checkCVEExists(conn):
 def createTable(conn):
     cur = conn.cursor()
     try:
-        print("creating table")
+        print("WARNING: cve table does not exist")
+        print("Creating cve table")
         # Get command to create cve table and create table
         command = create_cve()
         cur.execute(command)

@@ -15,7 +15,7 @@ start_date = startDate()
 # Gets most recent entry in database
 def getLastCVE(conn):
     cur = conn.cursor()
-    cur.execute("SELECT MAX(published) FROM cve")
+    cur.execute("SELECT MAX(published) FROM cve_new")
     latest = cur.fetchone()
 
     today = date.today()
@@ -55,7 +55,7 @@ def checkIDs(conn, data):
     ids = data['id'].to_list()
     id_list = ", ".join("'{0}'".format(i) for i in ids)
     cur = conn.cursor()
-    cur.execute("SELECT cve_id FROM cve WHERE cve_id IN ("+id_list+")")
+    cur.execute("SELECT cve_id FROM cve_new WHERE cve_id IN ("+id_list+")")
     tmp = cur.fetchall()
 
     already_exists = []
@@ -71,7 +71,7 @@ def insertIntoTable(conn, data):
     insert_fields = data[['id', 'Published', 'Modified', 'references', 'summary', 'cvss', 'cwe']]
     insert_data = insert_fields.values.tolist()
 
-    insert_query = 'INSERT INTO cve (cve_id, published, modified, refs, summary, cvss, cwe) VALUES %s'
+    insert_query = 'INSERT INTO cve_new (cve_id, published, modified, refs, summary, cvss, cwe) VALUES %s'
     psycopg2.extras.execute_values (
         cur, insert_query, insert_data
     )
@@ -84,12 +84,11 @@ def updateTable(conn, data):
     if 'id' in data.index:
         update_fields = data[['id', 'Modified', 'references', 'summary', 'cvss', 'cwe']]
         update_fields['Modified'] = pd.to_datetime(update_fields['Modified'])
-        # update_fields['cwe'] = update_fields['cwe'].fillna('')
         update_fields.rename(index=str, columns={"references": "refs"}, inplace=True)
         update_data = update_fields.values.tolist()
 
         try:
-            update_query = 'UPDATE cve SET modified=data.Modified, refs=data.refs, summary=data.summary, cvss=data.cvss, cwe=data.cwe, last_modified=NOW() FROM (VALUES %s) AS data (id, Modified, refs, summary, cvss, cwe) WHERE cve.cve_id = data.id '
+            update_query = 'UPDATE cve_new SET modified=data.Modified, refs=data.refs, summary=data.summary, cvss=data.cvss, cwe=data.cwe, last_modified=NOW() FROM (VALUES %s) AS data (id, Modified, refs, summary, cvss, cwe) WHERE cve_new.cve_id = data.id '
             psycopg2.extras.execute_values (
                 cur, update_query, update_data
             )

@@ -3,7 +3,7 @@
 def create_cve():
     command = (
         """
-        CREATE TABLE cve (
+        CREATE TABLE cve_new (
             id SERIAL PRIMARY KEY,
             modified TIMESTAMPTZ,
             last_modified TIMESTAMPTZ,

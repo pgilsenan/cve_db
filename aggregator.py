@@ -14,7 +14,7 @@ today = date.today()
 today = today.strftime("%d-%m-%Y")
 TEST_CUT_OFF_DATE = datetime.strptime(today, '%d-%m-%Y')
 COUNT = 0
-MAX_COUNT = 150
+MAX_COUNT = 500
 FIELD = ""
 
 FORMAT = '%(asctime)-15s  %(message)s'

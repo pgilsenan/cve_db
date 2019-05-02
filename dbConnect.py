@@ -22,7 +22,7 @@ def connect():
 
 def checkCVEExists(conn):
     cur = conn.cursor()
-    cur.execute("SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_catalog=%s AND table_schema='public' AND table_name=%s)", (params['database'], 'cve' ))
+    cur.execute("SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_catalog=%s AND table_schema='public' AND table_name=%s)", (params['database'], 'cve_new' ))
     exists = cur.fetchone()
     if exists[0] is True:
         return True
